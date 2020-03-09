@@ -17,6 +17,8 @@ int main()
     subaddress[0]=WHO_AM_I;
 
     while (true) {
+        add[0]=0;
+        
         //send to mpu register number
         i2c.write(MPU_ADDRESS, subaddress, 1,1);
 
