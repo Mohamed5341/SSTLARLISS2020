@@ -11,12 +11,17 @@ char PosFix[2];
 char Satellites[3];
 char Altitude[6];
 
+double Lat,Long;
+int posfix;
+
 
 // UnbufferedSerial(TX,RX)
 static UnbufferedSerial GPS(p9,p10);
 
 
 void readBytesUntil(char container[], char req, int size);
+double minutesConvert(char container[], int start);
+int degreesConvert(char container[], int end);
 
 int main()
 {
@@ -47,7 +52,16 @@ int main()
                     readBytesUntil(Altitude, ',', 3);
                     readBytesUntil(Altitude, ',', 5);
 
-                    printf("\n>>>>>>UTC:%s\nLat:%s\t%s\nLong:%s\t%s\nPosFix:%s\nAlt:%s\n",UTCTIM,Latitude,NSInd,Longitude,EWInd,PosFix,Altitude);
+                    posfix = atoi(PosFix);
+
+                    if(posfix == 1){//check if data is valid
+                        Lat = degreesConvert(Latitude, 2) + minutesConvert(Latitude, 2);
+                        Long = degreesConvert(Longitude, 3) + minutesConvert(Longitude, 3);
+
+                        printf("\n>>>>>>UTC:%s\nLat:%ld\t%s\nLong:%ld\t%s\nPosFix:%s\nAlt:%s\n",UTCTIM,(long)(Lat*100000),NSInd,(long)(Long*100000),EWInd,PosFix,Altitude);
+                    }else{
+                        printf("Position is not fix\n");
+                    }
                 }
             }
         }
@@ -81,4 +95,43 @@ void readBytesUntil(char container[], char req, int size){
     }
 
     container[size - 1] = '\0';//make sure to add null at the end if it can't find the required char
+}
+
+
+/* This function is used to convert minutes in Lngitude number or Latitude to degrees
+ * for example:
+ * Lat = 2232.1745;//before conversion
+ * container = ['2', '2', '3', '2', '.', '1', '7', '4', '5'];
+ * minutesConvert(container, 2); ==> 32.1745/60.0=0.5362416
+ */
+double minutesConvert(char container[], int start){
+    char minutes[8];
+
+    for(int i=start; i< start+7; i++){
+        minutes[i-start] = container[i];
+    }
+
+    minutes[7] = '\0';
+
+    return atof(minutes)/60.0;
+}
+
+
+/* This function gets longitude degree part of longitude and latitude
+ * for example:
+ * Lat = 2232.1745;//before conversion
+ * container = ['2', '2', '3', '2', '.', '1', '7', '4', '5'];
+ * degreesConvert(container, 2); ==> 22
+ */
+int degreesConvert(char container[], int end){
+    char deg[4];
+
+    for(int i = 0; i<end; i++){
+        deg[i] = container[i];
+    }
+
+    deg[end] = '\0';//add null cahr at the end
+
+    return atoi(deg);
+
 }
