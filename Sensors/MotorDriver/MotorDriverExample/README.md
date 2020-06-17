@@ -1,3 +1,3 @@
 # Motor Driver
 
-In this Example motor is just running.
+In this Example trying to run two motors using motor driver.
