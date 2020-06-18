@@ -4,7 +4,7 @@
  */
 
 #include "mbed.h"
-#include "MyMPU6050.h"
+#include "MPU6050-DMP/MyMPU6050.h"
 
 
 MyMPU6050 mpu(p28,p27,p10);
