@@ -11,13 +11,15 @@ char PosFix[2];
 char Satellites[3];
 char Altitude[6];
 
-double Lat,Long;
+int Lat_deg,Lat_min,Long_deg,Long_min;
 int posfix;
+
+char buffer[55];
 
 
 // UnbufferedSerial(TX,RX)
 static UnbufferedSerial GPS(p9,p10);
-
+static UnbufferedSerial RF(p28,p27);
 
 void readBytesUntil(char container[], char req, int size);
 double minutesConvert(char container[], int start);
@@ -26,6 +28,7 @@ int degreesConvert(char container[], int end);
 int main()
 {
     char c;
+    int value;
 
     //communication details
     GPS.baud(9600);
@@ -48,19 +51,24 @@ int main()
                     readBytesUntil(NSInd, ',', 1);
                     readBytesUntil(Longitude, ',', 10);
                     readBytesUntil(EWInd, ',', 1);
-                    readBytesUntil(PosFix, ',', 2);
+                    readBytesUntil(PosFix, ',', 1);
+                    readBytesUntil(Satellites, ',', 2);
                     readBytesUntil(Altitude, ',', 3);
                     readBytesUntil(Altitude, ',', 5);
 
                     posfix = atoi(PosFix);
 
                     if(posfix == 1){//check if data is valid
-                        Lat = degreesConvert(Latitude, 2) + minutesConvert(Latitude, 2);
-                        Long = degreesConvert(Longitude, 3) + minutesConvert(Longitude, 3);
+                        Lat_deg = degreesConvert(Latitude, 2);
+                        Lat_min = minutesConvert(Latitude, 2)*1000000;
+                        Long_deg = degreesConvert(Longitude, 3);
+                        Long_min = minutesConvert(Longitude, 3)*1000000;
 
-                        printf("\n>>>>>>UTC:%s\nLat:%ld\t%s\nLong:%ld\t%s\nPosFix:%s\nAlt:%s\n",UTCTIM,(long)(Lat*100000),NSInd,(long)(Long*100000),EWInd,PosFix,Altitude);
+                        value = sprintf(buffer,"GPS,%s,%d.%d,%s,%d.%d,%s,%s,%s,%s\n",UTCTIM,Lat_deg,Lat_min,NSInd,Long_deg,Long_min,EWInd,PosFix,Satellites,Altitude);
+                        RF.write(buffer,value);
                     }else{
-                        printf("Position is not fix\n");
+                        value = sprintf(buffer,"GPS,Position is not fix\n");
+                        RF.write(buffer, value);
                     }
                 }
             }
@@ -69,7 +77,7 @@ int main()
 }
 
 
-/* This function is used to read data to certian char in text
+/* This function is used toprintf ian char in text
  * for example:
  * coming string = "ABCDEFGH"
  * readBytesUntil(cont, 'D', 5);
@@ -94,7 +102,7 @@ void readBytesUntil(char container[], char req, int size){
         container[i] = c;//add null char to container
     }
 
-    container[size - 1] = '\0';//make sure to add null at the end if it can't find the required char
+    container[size] = '\0';//make sure to add null at the end if it can't find the required char
 }
 
 
