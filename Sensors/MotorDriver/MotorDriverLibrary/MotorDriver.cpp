@@ -21,7 +21,7 @@ void Motor::setSpeed(float speedVal){
     fow = (speedVal>0);
     rev = (speedVal<0);
 
-    speed = speedVal;
+    speed = fabs(speedVal);
 }
 
 

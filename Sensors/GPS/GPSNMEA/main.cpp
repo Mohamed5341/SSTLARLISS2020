@@ -16,19 +16,21 @@ int posfix;
 
 char buffer[55];
 
+char zeros[6][6] = {"", "0", "00", "000", "0000", "00000"};
 
 // UnbufferedSerial(TX,RX)
 static UnbufferedSerial GPS(p9,p10);
-static UnbufferedSerial RF(p28,p27);
+static UnbufferedSerial RF(p13,p14);
 
 void readBytesUntil(char container[], char req, int size);
 double minutesConvert(char container[], int start);
 int degreesConvert(char container[], int end);
+int digitsNum(int num);
 
 int main()
 {
     char c;
-    int value;
+    int size,lon_z,lat_z;
 
     //communication details
     GPS.baud(9600);
@@ -46,15 +48,15 @@ int main()
 
 
                 if(MSGID[2] == 'G' && MSGID[3] == 'G' && MSGID[4] == 'A'){//check message ID
-                    readBytesUntil(UTCTIM, ',', 10);
-                    readBytesUntil(Latitude, ',', 9);
-                    readBytesUntil(NSInd, ',', 1);
-                    readBytesUntil(Longitude, ',', 10);
-                    readBytesUntil(EWInd, ',', 1);
-                    readBytesUntil(PosFix, ',', 1);
-                    readBytesUntil(Satellites, ',', 2);
-                    readBytesUntil(Altitude, ',', 3);
-                    readBytesUntil(Altitude, ',', 5);
+                    readBytesUntil(UTCTIM, ',', 11);
+                    readBytesUntil(Latitude, ',', 10);
+                    readBytesUntil(NSInd, ',', 2);
+                    readBytesUntil(Longitude, ',', 11);
+                    readBytesUntil(EWInd, ',', 2);
+                    readBytesUntil(PosFix, ',', 2);
+                    readBytesUntil(Satellites, ',', 3);
+                    readBytesUntil(Altitude, ',', 4);
+                    readBytesUntil(Altitude, ',', 6);
 
                     posfix = atoi(PosFix);
 
@@ -64,11 +66,14 @@ int main()
                         Long_deg = degreesConvert(Longitude, 3);
                         Long_min = minutesConvert(Longitude, 3)*1000000;
 
-                        value = sprintf(buffer,"GPS,%s,%d.%d,%s,%d.%d,%s,%s,%s,%s\n",UTCTIM,Lat_deg,Lat_min,NSInd,Long_deg,Long_min,EWInd,PosFix,Satellites,Altitude);
-                        RF.write(buffer,value);
+                        lat_z = 6 - digitsNum(Lat_min);
+                        lon_z = 6 - digitsNum(Long_min);
+
+                        size = sprintf(buffer,"GPS,%s,%d.%s%d,%s,%d.%s%d,%s,%s,%s,%s\n",UTCTIM,Lat_deg,zeros[lat_z],Lat_min,NSInd,Long_deg,zeros[lon_z],Long_min,EWInd,PosFix,Satellites,Altitude);
+                        RF.write(buffer,size);
                     }else{
-                        value = sprintf(buffer,"GPS,Position is not fix\n");
-                        RF.write(buffer, value);
+                        size = sprintf(buffer,"GPS,Position is not fix\n");
+                        RF.write(buffer, size);
                     }
                 }
             }
@@ -95,13 +100,11 @@ void readBytesUntil(char container[], char req, int size){
         
         if(c == req){
             container[i] = '\0';//add null char to final location
-            
             return;
         }
 
         container[i] = c;//add null char to container
     }
-
     container[size] = '\0';//make sure to add null at the end if it can't find the required char
 }
 
@@ -142,4 +145,15 @@ int degreesConvert(char container[], int end){
 
     return atoi(deg);
 
+}
+
+int digitsNum(int num){
+    int s = 0;
+
+    while(num>0){
+        num = num/10;
+        s++;
+    }
+
+    return s;
 }

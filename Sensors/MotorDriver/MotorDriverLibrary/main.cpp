@@ -1,27 +1,22 @@
 #include "mbed.h"
 #include "MotorDriver.h"
 
-Motor motorA(p17,p18,p23);
+Motor motorA(p16,p17,p23);
 Motor motorB(p19,p20,p24);
 
 int main()
 {
+    
+    for(int i=5;i>=0;i--){
+        motorA.setSpeed(i/10.0);
+        motorB.setSpeed(i/10.0);
+        printf("%d\n",i);
+        ThisThread::sleep_for(10s);
+    }
 
+    
     while (true) {
-        motorA.setSpeed(0.5);
-        motorB.setSpeed(0.5);
-
-        wait_us(3000*1000);
-
-        motorA.setSpeed(0.75);
-        motorB.setSpeed(0.75);
-
-        wait_us(3000*1000);
-
-        motorA.stop();
-        motorB.stop();
-
-        wait_us(3000*1000);
+        
     }
 }
 
